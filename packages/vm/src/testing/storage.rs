@@ -61,6 +61,10 @@ impl MockStorage {
 impl Storage for MockStorage {
     fn get(&self, key: &[u8]) -> BackendResult<Option<Vec<u8>>> {
         let gas_info = GasInfo::with_externally_used(key.len() as u64);
+        let key_str = std::str::from_utf8(key).unwrap_or("[Invalid UTF-8]");
+        let value_bytes = self.data.get(key).cloned().unwrap_or_else(|| vec![]);
+        let value_str = std::str::from_utf8(&value_bytes).unwrap_or("[Invalid UTF-8]");
+        println!("\nReading key '{}', value: {}\n", key_str, value_str);
         (Ok(self.data.get(key).cloned()), gas_info)
     }
 
@@ -126,6 +130,9 @@ impl Storage for MockStorage {
 
     fn set(&mut self, key: &[u8], value: &[u8]) -> BackendResult<()> {
         self.data.insert(key.to_vec(), value.to_vec());
+        let key_str = std::str::from_utf8(key).unwrap_or("[Invalid UTF-8]");
+        let value_str = std::str::from_utf8(&value).unwrap_or("[Invalid UTF-8]");
+        println!("\nWriting key {}, value: {}\n", key_str, value_str);
         let gas_info = GasInfo::with_externally_used((key.len() + value.len()) as u64);
         (Ok(()), gas_info)
     }

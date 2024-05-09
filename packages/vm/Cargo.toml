@@ -49,6 +49,11 @@ strum = { version = "0.25.0", default-features = false, features = ["derive"] }
 # because cargo currently does not support optional dev-dependencies.
 dhat = { version = "0.3.2", optional = true }
 
+log = { version = "0.4.20", features = [] }
+simple-logging = "2.0.2"
+regex = "1.5"
+cw-utils = "2.0.0"
+
 # Dependencies that we do not use ourself. We add those entries
 # to bump the min version of them.
 bytecheck = "0.6.3" # With this version the simdutf8 dependency became optional
@@ -82,3 +87,4 @@ path = "examples/memory.rs"
 
 [profile.release]
 debug = 1
+

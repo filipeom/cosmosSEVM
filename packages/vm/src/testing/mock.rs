@@ -9,12 +9,12 @@ use super::storage::MockStorage;
 use crate::backend::unwrap_or_return_with_gas;
 use crate::{Backend, BackendApi, BackendError, BackendResult, GasInfo};
 
-pub const MOCK_CONTRACT_ADDR: &str = "cosmwasmcontract"; // TODO: use correct address
+pub const MOCK_CONTRACT_ADDR: &str = "neutron1e22zh5p8meddxjclevuhjmfj69jxfsa8uu3jvht72rv9d8lkhves6t8veq"; // TODO: use correct address
 const GAS_COST_HUMANIZE: u64 = 44; // TODO: these seem very low
 const GAS_COST_CANONICALIZE: u64 = 55;
 
 /// Default prefix used when creating Bech32 encoded address.
-const BECH32_PREFIX: &str = "cosmwasm";
+const BECH32_PREFIX: &str = "neutron";
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
@@ -159,6 +159,7 @@ impl BackendApi for MockApi {
         };
 
         match decode(input) {
+
             Ok((prefix, _, _)) if prefix != bech32_prefix => (
                 Err(BackendError::user_err("Wrong bech32 prefix")),
                 gas_total,

@@ -5,7 +5,7 @@ use std::rc::Rc;
 use std::sync::Mutex;
 
 use wasmer::{
-    Exports, Function, FunctionEnv, Imports, Instance as WasmerInstance, Module, Store, Value,
+    Exports, Engine, Function, FunctionEnv, Imports, Instance as WasmerInstance, Module, Store, Value,
 };
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
