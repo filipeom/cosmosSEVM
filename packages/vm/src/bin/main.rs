@@ -1,17 +1,22 @@
-use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, Timestamp,
-  BlockInfo, Addr, Binary, TransactionInfo, ContractInfo,SubMsgResult, SubMsgResponse, QueryResponse, to_vec,coins, Empty, Reply, Response};
-use cosmwasm_vm::testing::{mock_backend, mock_env, mock_info, MockApi};
-use cosmwasm_vm::{BackendApi, call_execute, call_instantiate, call_reply, Instance, InstanceOptions, Querier, Size, Storage};
-use log::{trace, info, error};
-use simple_logging;
-use log::LevelFilter;
+use cosmwasm_std::{
+    coins, to_vec, Addr, Binary, BlockInfo, ContractInfo, ContractResult, CustomMsg, Empty, Env,
+    MessageInfo, QueryResponse, Reply, Response, SubMsgResponse, SubMsgResult, Timestamp,
+    TransactionInfo,
+};
 use cosmwasm_vm::internals::compile;
+use cosmwasm_vm::testing::{mock_backend, mock_env, mock_info, MockApi};
+use cosmwasm_vm::{
+    call_execute, call_instantiate, call_reply, BackendApi, Instance, InstanceOptions, Querier,
+    Size, Storage,
+};
+use log::LevelFilter;
+use log::{error, info, trace};
+use simple_logging;
 
 use cw_utils::parse_instantiate_response_data;
 
-use serde_json::{Result, Value, Error};
 use regex::Regex;
-
+use serde_json::{Error, Result, Value};
 
 //use wasm_backend::{compile, make_store_with_engine};
 
@@ -19,13 +24,12 @@ use regex::Regex;
 const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(64);
 const DEFAULT_GAS_LIMIT: u64 = 1_000_000_000_000; // ~1ms
 const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
-        gas_limit: DEFAULT_GAS_LIMIT,
-    };
+    gas_limit: DEFAULT_GAS_LIMIT,
+};
 const HIGH_GAS_LIMIT: u64 = 20_000_000_000_000_000; // ~20s, allows many calls on one instance
 static ASTROPORT_CONTRACT: &[u8] = include_bytes!("../../astroport_factory.wasm");
 static NESTED_CONTRACT: &[u8] = include_bytes!("../../astroport_pair.wasm");
 static NESTED2_CONTRACT: &[u8] = include_bytes!("../../astroport_token.wasm");
-
 
 static ASTROPORT_INSTANTIATE: &[u8] = br#"{
     "pair_configs": [
@@ -55,7 +59,7 @@ static ASTROPORT_INSTANTIATE: &[u8] = br#"{
     "whitelist_code_id": 0,
     "coin_registry_address": "neutron1jzzv6r5uckwd64n6qan3suzker0kct5w565f6529zjyumfcx96kqtcswn3"
   }"#;
-  static ASTROPORT_EXECUTE: &[u8] = br#"{
+static ASTROPORT_EXECUTE: &[u8] = br#"{
     "create_pair": {
       "asset_infos": [
         {
@@ -76,12 +80,7 @@ static ASTROPORT_INSTANTIATE: &[u8] = br#"{
     }
   }"#;
 
-
-               
-  
-
-
-static CONTRACT: &[u8] = ASTROPORT_CONTRACT ;
+static CONTRACT: &[u8] = ASTROPORT_CONTRACT;
 static INSTANTIATE: &[u8] = ASTROPORT_INSTANTIATE;
 static EXECUTE: &[u8] = ASTROPORT_EXECUTE;
 
@@ -100,18 +99,18 @@ fn preprocess_json(json_string: &str) -> String {
 }
 
 fn encode_protobuf_string(s: &str) -> Vec<u8> {
-  let mut encoded = Vec::new();
-  encoded.push((1 << 3) | 2);
-  encoded.extend_from_slice(&(s.len() as u64).to_le_bytes());
-  encoded.extend_from_slice(s.as_bytes());
-  encoded
+    let mut encoded = Vec::new();
+    encoded.push((1 << 3) | 2);
+    encoded.extend_from_slice(&(s.len() as u64).to_le_bytes());
+    encoded.extend_from_slice(s.as_bytes());
+    encoded
 }
 
 fn extract_json(json_string: &str) -> serde_json::Result<Value> {
     // Find the start and end of the JSON structure
     let start_index: usize = json_string.find("{").unwrap_or(0);
     let mut end_index: usize = start_index;
-    let mut open_braces: usize  = 1;
+    let mut open_braces: usize = 1;
 
     // Loop through the string to find the end of the JSON structure
     for (i, char) in json_string[start_index + 1..].char_indices() {
@@ -134,13 +133,10 @@ fn extract_json(json_string: &str) -> serde_json::Result<Value> {
     serde_json::from_str(&correct_json)
 }
 
-
 fn run_threads(nb_instantiations: u32, nb_threads: u32, pre_compile: bool) {
-
     let start = std::time::Instant::now();
     let mut threads = vec![];
-    for _ in 0 ..nb_threads {
-
+    for _ in 0..nb_threads {
         threads.push( std::thread::spawn(move || {
 
             for _ in 0.. (nb_instantiations/nb_threads) {
@@ -154,9 +150,9 @@ fn run_threads(nb_instantiations: u32, nb_threads: u32, pre_compile: bool) {
                 };
 
 
-                let mut instance = 
+                let mut instance =
                         Instance::from_code( CONTRACT, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
-                    
+
                   let env = Env {
                     block: BlockInfo {
                       height: 12_345,
@@ -168,22 +164,22 @@ fn run_threads(nb_instantiations: u32, nb_threads: u32, pre_compile: bool) {
                           address: Addr::unchecked("neutron1hptk0k5kng7hjy35vmh009qd5m6l33609nypgf2yc6nqnewduqasxplt4e"),
                      },
                   };
-               
+
                   let info = mock_info("creator", &coins(1000, "earth"));
                   let contract_result =
                     call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, INSTANTIATE).unwrap();
                     println!("INSTANTIATE RESULT: {:?}", contract_result);
-                
+
                     let info = mock_info("verifies", &coins(1000, "earth"));
                     let contract_result =
                         call_execute::<_, _, _, Empty>(&mut instance, &env, &info, EXECUTE).unwrap();
-                    println!("EXECUTE RESULT: {:?}", contract_result);  
+                    println!("EXECUTE RESULT: {:?}", contract_result);
 
                     /*
 
                     let res = contract_result.unwrap();
 
-                    
+
 
                     // retrieve submessage fields
                     let id = res.messages[0].id.clone();
@@ -199,13 +195,13 @@ fn run_threads(nb_instantiations: u32, nb_threads: u32, pre_compile: bool) {
                     println!("reply_on: {:?}", reply_on);
 
                     */
-                   
 
-                    
+
+
 
                     // get a string representation of the result
                     let string_representation = format!("{:?}", contract_result);
-                    
+
                     // check if there is an instantiate nested in the result
                     if let Some(index) = string_representation.find("Instantiate") {
                         let json_string = &string_representation[index..];
@@ -213,7 +209,7 @@ fn run_threads(nb_instantiations: u32, nb_threads: u32, pre_compile: bool) {
                         if let Ok(value) = extract_json(json_string) {
                             // Print the "msg" field if it exists
                             if let Some(msg) = value.get("msg") {
-                              
+
                                 // println!("Extracted 'msg' field: {}", msg);
                                 // Found an instantiate message
                                 // 1. Map code_id/label in the original message to a contract
@@ -239,13 +235,13 @@ fn run_threads(nb_instantiations: u32, nb_threads: u32, pre_compile: bool) {
                                 let contract_result =
                                     call_instantiate::<_, _, _, Empty>(&mut nested2_instance, &mock_env(), &info, instantiate_msg).unwrap();
                                     println!("INSTANTIATE RESULT: {:?}", contract_result);
-                                
-                                
+
+
                                 // call reply from C to B
-                                let id: u64 = 1;
+                                // let id: u64 = 1;
                                 let data = "neutron1e22zh5p8meddxjclevuhjmfj69jxfsa8uu3jvht72rv9d8lkhves6t8veq";
-                                
-                                let mut data_vector = encode_protobuf_string(data);
+
+                                let data_vector = encode_protobuf_string(data);
 
                                 let binary_data = Binary::new(data_vector);
 
@@ -263,12 +259,12 @@ fn run_threads(nb_instantiations: u32, nb_threads: u32, pre_compile: bool) {
                                 };
 
 
-                                let contract_result = 
+                                let contract_result =
                                     call_reply::<_,_ ,_ , Empty>(&mut nested_instance, &mock_env(), &response).unwrap();
                                println!("REPLY RESULT: {:?}", contract_result);
 
-                                
-                                
+
+
 
                                 // call reply from B to A
                                 let id: u64 = 1;
@@ -291,28 +287,28 @@ fn run_threads(nb_instantiations: u32, nb_threads: u32, pre_compile: bool) {
                                     }),
                                 };
 
-                                let contract_result = 
+                                let contract_result =
                                     call_reply::<_,_ ,_ , Empty>(&mut instance, &mock_env(), &response).unwrap();
                                println!("REPLY RESULT: {:?}", contract_result);
 
-				                        
 
-                                } 
+
+                                }
                                 else {
                                     println!("'msg' field not found in JSON");
                                 }
                         } else {
                             println!("Error extracting JSON");
                         }
-                        
-                       
+
+
                     }
                     else {
                         // proceed with commit
                         println!("'Instantiate' not found in the input string.");
                     }
-                    
-                
+
+
             }
         }));
     }
@@ -321,17 +317,20 @@ fn run_threads(nb_instantiations: u32, nb_threads: u32, pre_compile: bool) {
         h.join().unwrap();
     }
     let stop = std::time::Instant::now();
-    println!("Elapsed precompile: {} threads {} : time: {:?}", pre_compile, nb_threads, stop.duration_since(start));
+    println!(
+        "Elapsed precompile: {} threads {} : time: {:?}",
+        pre_compile,
+        nb_threads,
+        stop.duration_since(start)
+    );
 }
 
-
 fn main() {
-
     simple_logging::log_to_stderr(LevelFilter::Trace);
-    
+
     let nb_instantiations = 1;
     /*
-    let contract_address = "neutron1e22zh5p8meddxjclevuhjmfj69jxfsa8uu3jvht72rv9d8lkhves6t8veq";    
+    let contract_address = "neutron1e22zh5p8meddxjclevuhjmfj69jxfsa8uu3jvht72rv9d8lkhves6t8veq";
 
     let data = Binary::from(contract_address.as_bytes());
 

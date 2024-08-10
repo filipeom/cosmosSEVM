@@ -571,6 +571,7 @@ dependencies = [
  "hex-literal",
  "leb128",
  "log",
+ "owi",
  "rand",
  "regex",
  "schemars",
@@ -1589,6 +1590,12 @@ name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
+
+[[package]]
+name = "owi"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fc2d2c135f923833958df9e78b0bc98724b7240bafc8ff445738d4523594249"
 
 [[package]]
 name = "parking_lot"
